@@ -1,11 +1,11 @@
 import User from "../models/customer.models.js";
 import bcrypt from "bcrypt";
 import genToken from "../utils/generateToken.js";
-import jwt from 'jsonwebtoken';
 
 const cookieOption = {
   httpOnly : true
 }
+
 
 export const registerUser = async (req, res) => {
     try{
@@ -83,7 +83,7 @@ export const getUser = (req, res) => {
 
 export const logoutUser = (req, res) => {
   try {
-    res.clearCookie(req.cookies.token)
+    res.clearCookie('token');
     res.status(200).json({
       success: true,
       message: "Logged out successfully"
