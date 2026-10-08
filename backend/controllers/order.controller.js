@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
-import Razorpay from 'razorpay';
+import razorpay, {
+  createRazorpayOrder,
+  getRazorpayKeyId,
+  getRazorpayKeySecret,
+} from '../config/razorpay.js';
 import Order from '../models/order.model.js';
 import User from '../models/customer.models.js';
 import Product from '../models/product.models.js';
@@ -147,17 +151,12 @@ export const createPaymentOrder = async (req, res) => {
     let razorpayOrderId = null;
     let razorpayOrderPayload = null;
 
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keyId = getRazorpayKeyId();
+    const keySecret = getRazorpayKeySecret();
 
     if (keyId && keySecret && !keyId.includes('placeholder')) {
       try {
-        const razorpayInstance = new Razorpay({
-          key_id: keyId,
-          key_secret: keySecret,
-        });
-
-        const rzpResponse = await razorpayInstance.orders.create({
+        const rzpResponse = await createRazorpayOrder({
           amount: amountInPaise,
           currency: 'INR',
           receipt: `order_rcpt_${newOrder._id.toString()}`,
@@ -252,7 +251,7 @@ export const verifyPayment = async (req, res) => {
     }
 
     // Verify HMAC SHA256 Signature
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret';
+    const keySecret = getRazorpayKeySecret() || 'rzp_test_secret';
     const body = `${razorpayOrderId}|${razorpayPaymentId}`;
     const expectedSignature = crypto
       .createHmac('sha256', keySecret)
@@ -265,6 +264,10 @@ export const verifyPayment = async (req, res) => {
       (keySecret === 'rzp_test_secret' && !razorpaySignature);
 
     if (!isValidSignature) {
+      // Mark payment status as FAILED while keeping cart completely intact
+      order.paymentStatus = 'FAILED';
+      await order.save();
+
       // CRITICAL REQUIREMENT: Do NOT clear cart on failed verification
       return res.status(400).json({
         success: false,
@@ -320,7 +323,6 @@ export const getUserOrders = async (req, res) => {
     const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
     return res.status(200).json({
       success: true,
-      count: orders.length,
       orders,
     });
   } catch (error) {
@@ -333,33 +335,61 @@ export const getUserOrders = async (req, res) => {
 };
 
 /**
- * Fetch specific order by ID
- * Route: GET /orders/:orderId
+ * Single Order API
+ * Route: GET /orders/:id
+ *
+ * Rules:
+ * 1. User must be authenticated (401 Unauthorized)
+ * 2. Order must exist (404 Not Found)
+ * 3. User must own the order (403 Forbidden)
+ * 4. A user must never be able to access another user's order by guessing its ID (Strict IDOR Defense)
  */
 export const getOrderById = async (req, res) => {
   try {
+    // Rule 1: User must be authenticated
     if (!req.user || !req.user._id) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: Authentication required to view order details.',
+      });
     }
 
-    const { orderId } = req.params;
+    const orderId = req.params.id || req.params.orderId;
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ success: false, message: 'Invalid order ID' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID format.',
+      });
     }
 
-    const order = await Order.findOne({ _id: orderId, user: req.user._id });
+    // Rule 2: Order must exist
+    const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found.',
+      });
     }
 
+    // Rule 3 & Rule 4: User must own the order (Anti-IDOR Defense)
+    const orderOwnerId = order.user?._id ? order.user._id.toString() : order.user?.toString();
+    if (!orderOwnerId || orderOwnerId !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You do not own this order.',
+      });
+    }
+
+    // Validation passed: Return verified order
     return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
+    console.error('Error in getOrderById:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch order',
+      message: 'Failed to fetch order details.',
       error: error.message,
     });
   }

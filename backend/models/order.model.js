@@ -84,6 +84,9 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
+// Compound index for ultra-fast customer order lookups sorted newest first
+orderSchema.index({ user: 1, createdAt: -1 });
+
 // Virtual alias so both order.orderItems and order.items can be accessed interchangeably
 orderSchema.virtual("orderItems")
   .get(function () {

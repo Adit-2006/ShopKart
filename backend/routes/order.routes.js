@@ -20,6 +20,6 @@ router.post('/verify-payment', verifyPayment);
 
 // Customer order retrieval
 router.get('/', getUserOrders);
-router.get('/:orderId', getOrderById);
+router.get('/:id', getOrderById);
 
 export default router;
