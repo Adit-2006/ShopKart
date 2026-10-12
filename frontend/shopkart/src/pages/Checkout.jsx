@@ -49,9 +49,11 @@ const Checkout = () => {
   // Handle input change and clear field errors dynamically
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Strip non-digit characters for pincode
+    const sanitizedValue = name === 'pincode' ? value.replace(/\D/g, '') : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: sanitizedValue,
     }));
 
     // Clear field-level error when user starts correcting
@@ -483,9 +485,11 @@ const Checkout = () => {
                     </label>
                     <div className="flex-1">
                       <input
-                        type="text"
+                        type="tel"
                         id="pincode"
                         name="pincode"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={formData.pincode}
                         onChange={handleChange}
                         placeholder="6-digit PIN code"
