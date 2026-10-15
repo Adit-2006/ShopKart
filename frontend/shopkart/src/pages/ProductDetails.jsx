@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate} from 'react-router-dom';
 import { getProductById } from '../services/api';
 import Navbar from '../components/Navbar';
 import { useCart } from '../context/CartContext';
