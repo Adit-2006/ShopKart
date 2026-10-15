@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { getUser, logoutCustomer } from '../services/api';
 import Navbar from '../components/Navbar';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const Home = () => {
   const navigate = useNavigate();
   const context = useOutletContext();
+  const { clearCart, refreshCart } = useCart();
+  const { clearWishlist, refreshWishlist } = useWishlist();
   const [user, setUser] = useState(context?.user || null);
   const [loading, setLoading] = useState(!context?.user);
   const [error, setError] = useState('');
@@ -17,6 +21,8 @@ const Home = () => {
         setLoading(true);
         const data = await getUser();
         setUser(data);
+        refreshCart();
+        refreshWishlist();
       } catch (err) {
         console.error('Failed to fetch user:', err);
         setError('Failed to load profile data.');
@@ -34,6 +40,8 @@ const Home = () => {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
+      clearCart();
+      clearWishlist();
       navigate('/login');
     }
   };

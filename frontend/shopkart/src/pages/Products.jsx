@@ -4,14 +4,23 @@ import { getProducts } from '../services/api';
 import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const Products = () => {
+  const { refreshCart } = useCart();
+  const { refreshWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All Categories');
   const hasLoadedOnce = useRef(false);
+
+  useEffect(() => {
+    refreshCart();
+    refreshWishlist();
+  }, [refreshCart, refreshWishlist]);
 
   const fetchProductList = useCallback(async (searchTerm, categoryFilter) => {
     try {

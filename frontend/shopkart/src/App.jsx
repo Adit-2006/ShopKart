@@ -12,31 +12,34 @@ import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
 import ProtectedRoute from './components/ProtectedRoute';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 
 function App() {
   return (
     <CartProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Navigate to="/register" replace />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/products/:id" element={<ProductDetails />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-success/:id" element={<OrderSuccess />} />
-          <Route path="/orders/:id" element={<OrderSuccess />} />
-          <Route path="/orders" element={<Orders />} />
+      <WishlistProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Navigate to="/register" replace />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetails />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-success/:id" element={<OrderSuccess />} />
+            <Route path="/orders/:id" element={<OrderSuccess />} />
+            <Route path="/orders" element={<Orders />} />
 
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<Home />} />
-          </Route>
-        </Routes>
-      </Router>
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/home" element={<Home />} />
+            </Route>
+          </Routes>
+        </Router>
+      </WishlistProvider>
     </CartProvider>
   );
 }

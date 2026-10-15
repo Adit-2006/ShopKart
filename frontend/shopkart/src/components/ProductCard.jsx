@@ -1,20 +1,27 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addToWishlist, removeFromWishlist } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const placeholderSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" fill="%231e293b"><rect width="400" height="300"/><text x="50%" y="50%" fill="%2394a3b8" font-family="sans-serif" font-size="18" text-anchor="middle" dominant-baseline="middle">Product Image</text></svg>`;
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToCart, isPending: isCartPending, isInCart } = useCart();
+  const {
+    isInWishlist,
+    addToWishlist,
+    removeFromWishlist,
+    isPending: isWishlistPending,
+  } = useWishlist();
+
   const [imgSrc, setImgSrc] = useState(product.image || placeholderSvg);
-  const [isSaved, setIsSaved] = useState(false);
   const [localSaving, setLocalSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const inFlightRef = useRef(false);
 
-  const isSaving = localSaving;
+  const isSaved = isInWishlist(product._id);
+  const isSaving = localSaving || isWishlistPending(product._id);
   const isOutOfStock = product.stock <= 0;
   const inCart = isInCart(product._id);
   const isAddingToCart = isCartPending(product._id);
@@ -35,10 +42,8 @@ const ProductCard = ({ product }) => {
     try {
       if (isSaved) {
         await removeFromWishlist(product._id);
-        setIsSaved(false);
       } else {
         await addToWishlist(product._id);
-        setIsSaved(true);
       }
     } catch (err) {
       if (err.response?.status === 401) {

@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerCustomer } from '../services/api';
+import { registerCustomer, logoutCustomer } from '../services/api';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { clearCart } = useCart();
+  const { clearWishlist } = useWishlist();
+
+  useEffect(() => {
+    clearCart();
+    clearWishlist();
+  }, [clearCart, clearWishlist]);
 
   const [formData, setFormData] = useState({
     fullname: '',
@@ -41,6 +50,13 @@ const Register = () => {
       };
 
       await registerCustomer(payload);
+      try {
+        await logoutCustomer();
+      } catch (e) {
+        // Ignore logout error if session was not active
+      }
+      clearCart();
+      clearWishlist();
       navigate('/login');
     } catch (err) {
       const errorMsg =

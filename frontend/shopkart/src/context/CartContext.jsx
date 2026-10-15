@@ -213,6 +213,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    setError(null);
   }, []);
 
   return (

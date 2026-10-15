@@ -89,11 +89,15 @@ export const addToCart = async (req, res) => {
     // Populate product details for the updated cart response
     await user.populate('cart.product');
 
+    const validCart = (user.cart || []).filter(
+      (item) => item && item.product
+    );
+
     // 7. Return updated cart
     return res.status(200).json({
       success: true,
       message: 'Cart updated',
-      cart: user.cart,
+      cart: validCart,
     });
   } catch (error) {
     console.error('Error in addToCart:', error);
@@ -248,10 +252,14 @@ export const updateCartQuantity = async (req, res) => {
 
     await user.populate('cart.product');
 
+    const validCart = (user.cart || []).filter(
+      (item) => item && item.product
+    );
+
     return res.status(200).json({
       success: true,
       message: 'Cart updated',
-      cart: user.cart,
+      cart: validCart,
     });
   } catch (error) {
     console.error('Error in updateCartQuantity:', error);
@@ -330,11 +338,15 @@ export const removeFromCart = async (req, res) => {
     // Deep populate product details for remaining cart items
     await user.populate('cart.product');
 
+    const validCart = (user.cart || []).filter(
+      (item) => item && item.product
+    );
+
     // 7. Return updated cart
     return res.status(200).json({
       success: true,
       message: 'Product removed from cart',
-      cart: user.cart,
+      cart: validCart,
     });
   } catch (error) {
     console.error('Error in removeFromCart:', error);

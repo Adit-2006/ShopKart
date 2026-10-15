@@ -1,12 +1,22 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { loginCustomer } from '../services/api';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { clearCart, refreshCart } = useCart();
+  const { clearWishlist, refreshWishlist } = useWishlist();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Proactively clear cart & wishlist state when on login screen
+    clearCart();
+    clearWishlist();
+  }, [clearCart, clearWishlist]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,10 +29,13 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
+      clearCart();
+      clearWishlist();
       await loginCustomer(formData);
+      await Promise.allSettled([refreshCart(), refreshWishlist()]);
       navigate('/home');
     } catch (err) {
-      setError(err.message ||  'Invalid Credential');
+      setError(err?.response?.data?.message || err.message || 'Invalid Credential');
     } finally {
       setLoading(false);
     }

@@ -1,36 +1,18 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getWishlist, removeFromWishlist } from '../services/api';
 import Navbar from '../components/Navbar';
 import WishlistCard from '../components/WishlistCard';
+import { useWishlist } from '../context/WishlistContext';
 
 const Wishlist = () => {
-  const [wishlist, setWishlist] = useState([]);
-  const [loadingWishlist, setLoadingWishlist] = useState(true);
-  const [wishlistError, setWishlistError] = useState(null);
-  const [removingId, setRemovingId] = useState(null);
-
-  const refreshWishlist = useCallback(async () => {
-    try {
-      setLoadingWishlist(true);
-      setWishlistError(null);
-      const data = await getWishlist();
-      const items = Array.isArray(data?.wishlist)
-        ? data.wishlist
-        : Array.isArray(data?.products)
-        ? data.products
-        : Array.isArray(data)
-        ? data
-        : [];
-      setWishlist(items);
-    } catch (err) {
-      console.error('Error fetching wishlist:', err);
-      setWishlistError(err.response?.data?.message || 'Unable to load saved products.');
-      setWishlist([]);
-    } finally {
-      setLoadingWishlist(false);
-    }
-  }, []);
+  const {
+    wishlistItems: wishlist,
+    loadingWishlist,
+    wishlistError,
+    refreshWishlist,
+    removeFromWishlist,
+    isPending,
+  } = useWishlist();
 
   useEffect(() => {
     refreshWishlist();
@@ -38,27 +20,7 @@ const Wishlist = () => {
 
   const handleRemove = async (productId, e) => {
     e?.stopPropagation();
-    if (removingId === productId) return;
-
-    try {
-      setRemovingId(productId);
-      const res = await removeFromWishlist(productId);
-      const updated = Array.isArray(res?.wishlist)
-        ? res.wishlist
-        : Array.isArray(res?.products)
-        ? res.products
-        : null;
-
-      if (updated) {
-        setWishlist(updated);
-      } else {
-        setWishlist((prev) => prev.filter((item) => (item._id || item) !== productId));
-      }
-    } catch (err) {
-      console.error('Error removing item from wishlist:', err);
-    } finally {
-      setRemovingId(null);
-    }
+    await removeFromWishlist(productId);
   };
 
   const count = wishlist.length;
@@ -188,7 +150,7 @@ const Wishlist = () => {
                   key={product._id}
                   product={product}
                   onRemove={handleRemove}
-                  isRemoving={removingId === product._id}
+                  isRemoving={isPending(product._id)}
                 />
               );
             })}

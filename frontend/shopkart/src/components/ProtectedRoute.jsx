@@ -1,10 +1,14 @@
- import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { getUser } from '../services/api';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const ProtectedRoute = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [user, setUser] = useState(null);
+  const { clearCart, refreshCart } = useCart();
+  const { clearWishlist, refreshWishlist } = useWishlist();
 
   useEffect(() => {
     let isMounted = true;
@@ -14,10 +18,14 @@ const ProtectedRoute = () => {
         if (isMounted) {
           setUser(data);
           setIsAuthenticated(true);
+          refreshCart();
+          refreshWishlist();
         }
       })
       .catch(() => {
         if (isMounted) {
+          clearCart();
+          clearWishlist();
           setIsAuthenticated(false);
         }
       });

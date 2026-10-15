@@ -1,9 +1,11 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { logoutCustomer } from '../services/api';
 
 const Navbar = () => {
-  const { cartCount } = useCart();
+  const { cartCount, clearCart } = useCart();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -15,6 +17,8 @@ const Navbar = () => {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
+      clearCart();
+      clearWishlist();
       navigate('/login');
     }
   };
@@ -85,6 +89,16 @@ const Navbar = () => {
               />
             </svg>
             <span>Wishlist</span>
+            <span
+              id="nav-wishlist-count"
+              className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full ${
+                wishlistCount > 0
+                  ? 'text-white bg-pink-600 shadow-sm shadow-pink-500/30'
+                  : 'text-slate-400 bg-slate-800'
+              }`}
+            >
+              ({wishlistCount || 0})
+            </span>
           </Link>
 
           {/* 4. Cart (with live counter badge from useCart) */}

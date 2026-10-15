@@ -5,6 +5,7 @@ const cookieOption = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   sameSite: 'lax',
   secure: process.env.NODE_ENV === 'production',
+  path: '/',
 };
 
 
@@ -104,14 +105,19 @@ export const getUser = (req, res) => {
 
 export const logoutUser = (req, res) => {
   try {
-    res.clearCookie('token');
+    const clearOptions = {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    };
+    res.clearCookie('token', clearOptions);
+    res.cookie('token', '', { ...clearOptions, expires: new Date(0) });
     res.status(200).json({
       success: true,
       message: "Logged out successfully"
-    })    
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "The error is + " + err });
   }
-  catch (err) {
-    return res.status(500).json({message: "The error is + " + err})
-  }
-
-}
+};

@@ -1,23 +1,35 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getProductById, addToWishlist, removeFromWishlist } from '../services/api';
+import { getProductById } from '../services/api';
 import Navbar from '../components/Navbar';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const placeholderSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" fill="%231e293b"><rect width="800" height="600"/><text x="50%" y="50%" fill="%2394a3b8" font-family="sans-serif" font-size="24" text-anchor="middle" dominant-baseline="middle">Product Image</text></svg>`;
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, isPending: isCartPending } = useCart();
+  const { addToCart, isPending: isCartPending, refreshCart } = useCart();
+  const {
+    isInWishlist,
+    addToWishlist,
+    removeFromWishlist,
+    isPending: isWishlistPending,
+    refreshWishlist,
+  } = useWishlist();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addedToCart, setAddedToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    refreshCart();
+    refreshWishlist();
+  }, [refreshCart, refreshWishlist]);
   const [imgSrc, setImgSrc] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
   const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
 
   useEffect(() => {
@@ -45,7 +57,8 @@ const ProductDetails = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const inFlightRef = useRef(false);
 
-  const isSaving = isUpdatingWishlist;
+  const isSaved = isInWishlist(product?._id);
+  const isSaving = isUpdatingWishlist || (product && isWishlistPending(product._id));
 
   const handleAddToCart = async () => {
     if (!product || isOutOfStock) return;
@@ -70,10 +83,8 @@ const ProductDetails = () => {
     try {
       if (isSaved) {
         await removeFromWishlist(product._id);
-        setIsSaved(false);
       } else {
         await addToWishlist(product._id);
-        setIsSaved(true);
       }
     } catch (err) {
       if (err.response?.status === 401) {

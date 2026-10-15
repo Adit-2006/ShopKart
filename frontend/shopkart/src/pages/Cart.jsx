@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useCart } from '../context/CartContext';
@@ -18,6 +18,10 @@ const Cart = () => {
     refreshCart,
     isPending,
   } = useCart();
+
+  useEffect(() => {
+    refreshCart();
+  }, [refreshCart]);
 
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);

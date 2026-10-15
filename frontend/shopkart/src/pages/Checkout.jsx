@@ -24,6 +24,11 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
+  // Hook: refresh cart on mount to ensure current user's cart is loaded
+  useEffect(() => {
+    refreshCart();
+  }, [refreshCart]);
+
   // Hook: useEffect to pre-fill authenticated user's contact information
   useEffect(() => {
     let isMounted = true;

@@ -57,7 +57,7 @@ export const addToWishlist = async (req, res) => {
 
     // Check if product is already in wishlist
     const isAlreadyWishlisted = user.wishlist.some(
-      (id) => id.toString() === productId.toString()
+      (id) => id && id.toString() === productId.toString()
     );
 
     if (isAlreadyWishlisted) {
@@ -180,7 +180,7 @@ export const removeFromWishlist = async (req, res) => {
 
     // Check if the product exists in the user's wishlist
     const isProductInWishlist = user.wishlist.some(
-      (id) => id.toString() === productId.toString()
+      (id) => id && id.toString() === productId.toString()
     );
 
     if (!isProductInWishlist) {
@@ -192,7 +192,7 @@ export const removeFromWishlist = async (req, res) => {
 
     // Remove product reference from user's wishlist
     user.wishlist = user.wishlist.filter(
-      (id) => id.toString() !== productId.toString()
+      (id) => id && id.toString() !== productId.toString()
     );
     await user.save();
 
