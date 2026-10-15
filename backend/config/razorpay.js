@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure .env from backend directory is loaded regardless of process.cwd()
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env'), quiet: true });
+dotenv.config({ quiet: true });
 
 const keyId = process.env.RAZORPAY_KEY_ID?.trim() || 'rzp_test_placeholder';
 const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim() || 'rzp_test_secret';

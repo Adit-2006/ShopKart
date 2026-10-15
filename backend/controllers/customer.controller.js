@@ -1,11 +1,31 @@
 import User from "../models/customer.models.js"; import bcrypt from "bcrypt"; import genToken from "../utils/generateToken.js";
 
-const cookieOption = {
-  httpOnly: true,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
+const isProduction = () => process.env.NODE_ENV === 'production';
+
+// Cross-site deployments (frontend on Vercel, backend on Render) require
+// SameSite=None so the browser sends the auth cookie on cross-origin XHR,
+// and SameSite=None requires Secure (HTTPS). For same-origin/local
+// development, 'lax' is the safer default. Override with COOKIE_SAMESITE if
+// the frontend and backend are served from the same origin.
+//
+// Computed lazily (per request) so it always reflects the environment after
+// dotenv has loaded, regardless of module evaluation order.
+const getCookieOptions = ({ withMaxAge = true } = {}) => {
+  const production = isProduction();
+  const sameSite = (process.env.COOKIE_SAMESITE || (production ? 'none' : 'lax')).toLowerCase();
+
+  const options = {
+    httpOnly: true,
+    sameSite,
+    secure: production || sameSite === 'none',
+    path: '/',
+  };
+
+  if (withMaxAge) {
+    options.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  }
+
+  return options;
 };
 
 
@@ -36,7 +56,7 @@ export const registerUser = async (req, res) => {
 
       
       const token = genToken(newUser._id);
-      res.cookie('token', token, cookieOption);
+      res.cookie('token', token, getCookieOptions());
       
       res.status(201).json({
           success: true,
@@ -75,7 +95,7 @@ export const loginUser = async (req, res) => {
       }
 
       const token = genToken(customer._id)
-      res.cookie('token', token, cookieOption)
+      res.cookie('token', token, getCookieOptions())
 
       res.status(200).json({
         success: true,
@@ -105,12 +125,7 @@ export const getUser = (req, res) => {
 
 export const logoutUser = (req, res) => {
   try {
-    const clearOptions = {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-    };
+    const clearOptions = getCookieOptions({ withMaxAge: false });
     res.clearCookie('token', clearOptions);
     res.cookie('token', '', { ...clearOptions, expires: new Date(0) });
     res.status(200).json({

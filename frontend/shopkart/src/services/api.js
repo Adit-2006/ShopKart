@@ -1,7 +1,21 @@
 import axios from 'axios';
 
+// Backend base URL. Local development falls back to the original localhost
+// port; production is configured with VITE_API_URL (e.g. the Render URL).
+// The path prefixes below (/customers, /products, ...) already match the
+// backend routes, so no extra /api prefix is added here.
+//
+// - VITE_API_URL unset            -> http://localhost:8083 (local development)
+// - VITE_API_URL=https://...      -> direct requests to that backend
+// - VITE_API_URL= (empty string)  -> same-origin relative requests
+//   (used when the API is reverse-proxied through the frontend host)
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const baseURL = (
+  configuredApiUrl !== undefined ? configuredApiUrl : 'http://localhost:8083'
+).replace(/\/+$/, '');
+
 const API = axios.create({
-  baseURL: "http://localhost:8083/",
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

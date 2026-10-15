@@ -8,6 +8,9 @@
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
